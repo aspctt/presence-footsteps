@@ -12,4 +12,4 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-rootProject.name = 'PresenceFootsteps'
+rootProject.name = 'PresenceFootstepsLite'
