@@ -30,7 +30,7 @@
     "fabricloader": "${loaderVersion}",
     "java": ">=21",
     "fabric-api": "${fabricVersion}",
-    "yacl": "${yaclVersion}"
+    "yet_another_config_lib_v3": "${yaclVersion}"
   },
   "suggests": {
     "modmenu": "${modmenuVersion}"
