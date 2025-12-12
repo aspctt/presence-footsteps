@@ -41,7 +41,7 @@ public interface StepSoundSource {
             if (!MinecraftClient.getInstance().isInSingleplayer() && MinecraftClient.getInstance().isIntegratedServerRunning()) {
                 return true;// Allow footsteps when in lan and multiplayer
             }
-            if (!engine.getConfig().isExclusiveMode() && !(entity instanceof PlayerEntity)) {
+            if (!engine.getConfig().getExclusive() && !(entity instanceof PlayerEntity)) {
                 return false;
             }
             return engine.isEnabledFor(entity) && getStepGenerator(engine).isPresent();

@@ -72,14 +72,14 @@ public class SoundEngine implements ResourceReloader {
 
         if (source instanceof PlayerEntity) {
             if (PlayerUtil.isClientPlayer(source)) {
-                volume *= config.clientPlayerVolume.getPercentage();
+                volume *= config.getClientPlayerVolume() * 0.01F;
             } else {
-                volume *= config.otherPlayerVolume.getPercentage();
+                volume *= config.getOtherPlayerVolume() * 0.01F;
             }
         } else if (source instanceof HostileEntity) {
-            volume *= config.hostileEntitiesVolume.getPercentage();
+            volume *= config.getHostileEntitiesVolume() * 0.01F;
         } else {
-            volume *= config.passiveEntitiesVolume.getPercentage();
+            volume *= config.getPassiveEntitiesVolume() * 0.01F;
         }
 
         float runningProgress = ((StepSoundSource) source).getStepGenerator(this)
@@ -124,7 +124,7 @@ public class SoundEngine implements ResourceReloader {
     public boolean isActive(MinecraftClient client) {
         return hasData()
                 && config.getEnabled()
-                && (client.isInSingleplayer() || config.getEnabledMP());
+                && (client.isInSingleplayer() || config.getMultiplayer());
     }
 
     private Stream<? extends Entity> getTargets(final Entity cameraEntity) {

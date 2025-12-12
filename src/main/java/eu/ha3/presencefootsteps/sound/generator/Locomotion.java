@@ -46,7 +46,7 @@ public enum Locomotion {
     }
 
     public Text getOptionName() {
-        return Text.translatable("menu.pf.stance", Text.translatable(this == NONE ? AUTO_TRANSLATION_KEY : translationKey));
+        return Text.translatable(this == NONE ? AUTO_TRANSLATION_KEY : translationKey);
     }
 
     public Text getOptionTooltip() {
@@ -58,19 +58,11 @@ public enum Locomotion {
     }
 
     public static Locomotion forLiving(Entity entity, Locomotion fallback) {
-        if (MineLP.hasPonies()) {
-            return MineLP.getLocomotion(entity, fallback);
-        }
-
         return fallback;
     }
 
     public static Locomotion forPlayer(PlayerEntity ply, Locomotion preference) {
         if (preference == NONE) {
-            if (ply instanceof ClientPlayerEntity && MineLP.hasPonies()) {
-                return MineLP.getLocomotion(ply);
-            }
-
             return Locomotion.BIPED;
         }
 

@@ -38,10 +38,8 @@ System.out.println "Outlet MC Versions: ${outlet.mcVersions()}"
 repositories {
     flatDir { dirs 'lib' }
     mavenLocal()
-    maven { name 'pehkui'; url 'https://jitpack.io' }
     maven { name 'modmenu'; url 'https://maven.terraformersmc.com/releases' }
-    maven { name 'minelp'; url 'https://repo.minelittlepony-mod.com/maven/snapshot' }
-    maven { name 'minelp-release'; url 'https://repo.minelittlepony-mod.com/maven/release' }
+    maven {name 'Xander Maven'; url 'https://maven.isxander.dev/releases' }
 }
 
 dependencies {
@@ -49,25 +47,9 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modApi "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    modApi fabricApi.module("fabric-api-base", project.fabric_version)
-    modApi fabricApi.module("fabric-lifecycle-events-v1", project.fabric_version)
-    modApi fabricApi.module("fabric-key-binding-api-v1", project.fabric_version)
-    modApi fabricApi.module("fabric-screen-api-v1", project.fabric_version)
-    modApi fabricApi.module("fabric-resource-loader-v0", project.fabric_version)
-    modApi fabricApi.module("fabric-block-api-v1", project.fabric_version)
-    modImplementation fabricApi.module("fabric-transitive-access-wideners-v1", project.fabric_version)
-
-    modApi "com.minelittlepony:kirin:${project.kirin_version}"
-    include "com.minelittlepony:kirin:${project.kirin_version}"
-
-    if (project.use_minelp == '1') {
-      modCompileOnly "com.minelittlepony:minelittlepony:${project.minelp_version}"
-    } else {
-      modCompileOnly "com.minelittlepony:minelittlepony-dummy:${project.minelp_version}"
-    }
-    modCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}")
-
-    // modImplementation "com.github.Virtuoel:Pehkui:${project.pehkui_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
+    modImplementation "dev.isxander:yet-another-config-lib:${project.yacl_version}"
 }
 
 processResources {
@@ -78,8 +60,8 @@ processResources {
                 "minecraftVersion": project.minecraft_version_range,
                 "loaderVersion": ">=${project.loader_version}",
                 "fabricVersion": ">=${project.fabric_version}",
-                "kirinVersion": ">=${kirin_version}",
-                "minelpVersion": ">=${project.minelp_version}"
+                "yaclVersion": ">=${project.yacl_version}",
+                "modmenuVersion": ">=${project.modmenu_version}"
     }
 
     from 'LICENSE'
@@ -102,7 +84,7 @@ modrinth {
     //featured = true
     versionNumber = version.toString()
     versionName = archivesBaseName + '-' + version
-    changelog = "[Changelog](https://github.com/Sollace/Presence-Footsteps/releases/tag/${version.toString()})"
+    changelog = "[Changelog](https://github.com/amiralimollaei/Presence-Footsteps-Lite/releases/tag/${version.toString()})"
     loaders = ['fabric', 'quilt']
     uploadFile = remapJar
     outlet.mcVersions().each{ver ->
@@ -110,7 +92,7 @@ modrinth {
     }
     dependencies {
        required.project 'P7dR8mSH' // Fabric API
-       optional.project 'JBjInUXM' // Mine Little Pony
-       embedded.project '9aNz8Zqn' // Kirin
+       required.project '1eAoo2KR' // Yet Another Config Lib
+       optional.project 'mOgUt4GM' // ModMenu
     }
 }

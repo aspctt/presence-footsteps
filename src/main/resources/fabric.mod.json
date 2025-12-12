@@ -30,10 +30,10 @@
     "fabricloader": "${loaderVersion}",
     "java": ">=21",
     "fabric-api": "${fabricVersion}",
-    "kirin": "${kirinVersion}"
+    "yacl": "${yaclVersion}"
   },
   "suggests": {
-    "minelp": "${minelpVersion}"
+    "modmenu": "${modmenuVersion}"
   },
   "custom": {
     "modmenu": {

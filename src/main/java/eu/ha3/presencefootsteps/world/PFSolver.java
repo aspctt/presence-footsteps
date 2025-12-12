@@ -40,7 +40,7 @@ public class PFSolver implements Solver {
             state = collidable.getCollidedStateAt(pos);
         }
 
-        return state.getAppearance(world, pos, Direction.UP, state, pos);
+        return state.getBlock().getAppearance(state, world, pos, Direction.UP, state, pos);
     }
 
     private Box getCollider(Entity player) {
@@ -147,7 +147,7 @@ public class PFSolver implements Solver {
     private Association findAssociation(AssociationPool associations, LivingEntity player, Box collider, BlockPos originalFootPos, BlockPos.Mutable pos) {
         Association association;
 
-        if (engine.getConfig().isVisualiserRunning()) {
+        if (engine.getConfig().getVisualiser()) {
             for (int i = 0; i < 10; i++) {
                 player.getEntityWorld().addParticleClient(ParticleTypes.DOLPHIN,
                     pos.getX() + 0.5,
@@ -158,7 +158,7 @@ public class PFSolver implements Solver {
 
         if ((association = findAssociation(associations, player, pos, collider)).isResult()) {
             if (!association.state().isLiquid()) {
-                if (engine.getConfig().isVisualiserRunning()) {
+                if (engine.getConfig().getVisualiser()) {
                     player.getEntityWorld().addParticleClient(ParticleTypes.DUST_PLUME,
                             association.pos().getX() + 0.5,
                             association.pos().getY() + 0.9,
@@ -184,7 +184,7 @@ public class PFSolver implements Solver {
             for (int z : zValues) {
                 if (x != originalFootPos.getX() || z != originalFootPos.getZ()) {
                     pos.set(x, originalFootPos.getY(), z);
-                    if (engine.getConfig().isVisualiserRunning()) {
+                    if (engine.getConfig().getVisualiser()) {
                         for (int i = 0; i < 10; i++) {
                             player.getEntityWorld().addParticleClient(ParticleTypes.DOLPHIN,
                                 pos.getX() + 0.5,
@@ -194,7 +194,7 @@ public class PFSolver implements Solver {
                     }
                     if ((association = findAssociation(associations, player, pos, collider)).isResult()) {
                         if (!association.state().isLiquid()) {
-                            if (engine.getConfig().isVisualiserRunning()) {
+                            if (engine.getConfig().getVisualiser()) {
                                 player.getEntityWorld().addParticleClient(ParticleTypes.DUST_PLUME,
                                         association.pos().getX() + 0.5,
                                         association.pos().getY() + 0.9,
@@ -258,7 +258,7 @@ public class PFSolver implements Solver {
                 }
             }
 
-            if (engine.getConfig().foliageSoundsVolume.get() > 0) {
+            if (engine.getConfig().getFoliageSoundsVolume() > 0) {
                 if (entity.getEquippedStack(EquipmentSlot.FEET).isEmpty() || entity.isSprinting()) {
                     if (association.isEmitter() && carpet.getCollisionShape(entity.getEntityWorld(), pos).isEmpty()) {
                         // This condition implies that foliage over a NOT_EMITTER block CANNOT PLAY

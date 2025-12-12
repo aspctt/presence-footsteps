@@ -50,21 +50,21 @@ public class PFDebugHud implements DebugHudEntry {
         finalList.addLinesToSection(DebugHudEntries.SOUND_MOOD, List.of(
                 "",
                 Formatting.UNDERLINE + "Presence Footsteps " + FabricLoader.getInstance().getModContainer("presencefootsteps").get().getMetadata().getVersion(),
-                String.format("Enabled: %s, Multiplayer: %s, Running: %s", config.getEnabled(), config.getEnabledMP(), engine.isRunning(client)),
+                String.format("Enabled: %s, Multiplayer: %s, Running: %s", config.getEnabled(), config.getMultiplayer(), engine.isRunning(client)),
                 String.format("Volume: Global[G: %s%%, W: %s%%, F: %s%%]",
                         config.getGlobalVolume(),
-                        config.wetSoundsVolume,
-                        config.foliageSoundsVolume
+                        config.getWetSoundsVolume(),
+                        config.getFoliageSoundsVolume()
                 ),
                 String.format("Entities[H: %s%%, P: %s%%], Players[U: %s%%, T: %s%% ]",
-                        config.hostileEntitiesVolume,
-                        config.passiveEntitiesVolume,
-                        config.clientPlayerVolume,
-                        config.otherPlayerVolume
+                        config.getHostileEntitiesVolume(),
+                        config.getPassiveEntitiesVolume(),
+                        config.getClientPlayerVolume(),
+                        config.getOtherPlayerVolume()
                 ),
                 String.format("Stepping Mode: %s, Targeting Mode: %s, Footwear: %s", config.getLocomotion() == Locomotion.NONE
                         ? String.format("AUTO (%sDETECTED %s%s)", Formatting.BOLD, Locomotion.forPlayer(client.player, Locomotion.NONE), Formatting.RESET)
-                        : config.getLocomotion(), config.getEntitySelector(), config.getEnabledFootwear()),
+                        : config.getLocomotion(), config.getEntitySelector(), config.getFootwear()),
                 String.format("Data Loaded: B%s P%s G%s",
                         engine.getIsolator().globalBlocks().getSubstrates().size(),
                         engine.getIsolator().primitives().getSubstrates().size(),

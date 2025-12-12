@@ -7,8 +7,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import com.google.gson.stream.JsonWriter;
-import com.minelittlepony.common.util.GamePaths;
 
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.sound.BlockSoundGroup;
@@ -31,7 +31,7 @@ public interface BlockReport {
         ChatHud hud = client.inGameHud.getChatHud();
         return CompletableFuture.supplyAsync(() -> {
             try {
-                Path loc = getUniqueFileName(GamePaths.getGameDirectory().resolve("presencefootsteps"), baseName, ext);
+                Path loc = getUniqueFileName(FabricLoader.getInstance().getGameDir().resolve("presencefootsteps"), baseName, ext);
                 action.accept(loc);
                 return loc;
             } catch (Exception e) {

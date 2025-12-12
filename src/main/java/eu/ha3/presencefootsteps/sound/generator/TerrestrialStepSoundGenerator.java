@@ -349,7 +349,7 @@ class TerrestrialStepSoundGenerator implements StepSoundGenerator {
     }
 
     protected void playStep(Association association, State eventType) {
-        if (engine.getConfig().getEnabledFootwear()) {
+        if (engine.getConfig().getFootwear()) {
 
             EquippableComponent equipable = entity.getEquippedStack(EquipmentSlot.FEET).get(DataComponentTypes.EQUIPPABLE);
             if (equipable != null) {

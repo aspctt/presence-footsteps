@@ -56,11 +56,6 @@
 	"menu.pf.group.sound_packs": "Geräuschpakete",
 	"pf.report.save": "Report gespeichert unter: %s",
 	"pf.report.error": "Es konnte kein Report erstellt werden: %s",
-	"pf.update.title": "Ein Update ist verfügbar",
-	"pf.update.text": "Presence Footsteps %s",
-	"pf.update.checking": "Suche nach Updates...",
-	"pf.update.updates_available": "Ein Update ist verfügbar!\n Presence Footsteps %s für MC%s",
-	"pf.update.up_to_date": "Auf dem neusten Stand",
 	"subtitles.pf.footsteps": "Schritte",
 	"subtitles.pf.wood_squeak": "Holz quietscht",
 	"subtitles.pf.wood_bends": "Holz biegt sich",
@@ -82,5 +77,13 @@
 	"subtitles.pf.glass_croak": "Glas stöhnt",
 	"subtitles.pf.chain": "Ketten klimpern",
 	"subtitles.pf.stone_crack": "Stein bröckelt",
-	"subtitles.pf.wax_squeak": "Wachs quietscht"
+	"subtitles.pf.wax_squeak": "Wachs quietscht",
+	"menu.pf.multiplayer": "Enable In Multiplayer",
+	"menu.pf.global.players_and_passives": "Players + Passives",
+	"menu.pf.footwear": "Footwear",
+	"menu.pf.exclusive_mode": "Exclusive Mode",
+	"menu.pf.footsteps.targets": "Target Entities",
+	"menu.pf.report.full.tooltip": "Prints out what sounds every block and entity in the game are using.",
+	"menu.pf.report.concise.tooltip": "Prints out what sounds every block and entity in the game are using. (Concise: Only prints entries that are missing a sounds mapping)",
+	"menu.pf.report.acoustics.tooltip": "Exports the acoustics file in the current format. Use this to update your resource pack."
 }

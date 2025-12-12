@@ -4,16 +4,13 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import net.minecraft.client.gui.hud.DebugHud;
 import net.minecraft.client.gui.hud.debug.DebugHudEntries;
+import net.minecraft.client.gui.screen.DebugOptionsScreen;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
 
-import com.minelittlepony.common.client.gui.GameGui;
-import com.minelittlepony.common.util.GamePaths;
-
-import eu.ha3.mc.quick.update.UpdateChecker;
-import eu.ha3.mc.quick.update.UpdaterConfig;
 import eu.ha3.presencefootsteps.sound.SoundEngine;
 import eu.ha3.presencefootsteps.util.Edge;
 import net.fabricmc.api.ClientModInitializer;
@@ -49,25 +46,19 @@ public class PresenceFootsteps implements ClientModInitializer {
         return instance;
     }
 
-    private final Path pfFolder = GamePaths.getConfigDirectory().resolve("presencefootsteps");
-    private final PFConfig config = new PFConfig(pfFolder.resolve("userconfig.json"), this);
+    private final Path pfFolder = FabricLoader.getInstance().getConfigDir().resolve("presencefootsteps");
+    private final PFConfig config = new PFConfig(pfFolder.resolve("userconfig.json"));
     private final SoundEngine engine = new SoundEngine(config);
     private final PFDebugHud debugHud = new PFDebugHud(engine);
-
-    private final UpdaterConfig updaterConfig = new UpdaterConfig(pfFolder.resolve("updater.json"));
-    private final UpdateChecker updater = new UpdateChecker(updaterConfig, MODID, UPDATER_ENDPOINT, (newVersion, currentVersion) -> {
-        showSystemToast(
-                Text.translatable("pf.update.title"),
-                Text.translatable("pf.update.text", newVersion.version().getFriendlyString(), newVersion.minecraft().getFriendlyString())
-        );
-    });
+    private boolean prevEnabled = config.getEnabled();
 
     private final KeyBinding optionsKeyBinding = new KeyBinding("key.presencefootsteps.settings", InputUtil.Type.KEYSYM, InputUtil.GLFW_KEY_F10, KEY_BINDING_CATEGORY);
     private final KeyBinding toggleKeyBinding = new KeyBinding("key.presencefootsteps.toggle", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, KEY_BINDING_CATEGORY);
     private final KeyBinding debugToggleKeyBinding = new KeyBinding("key.presencefootsteps.debug_toggle", InputUtil.Type.KEYSYM, InputUtil.GLFW_KEY_Z, KEY_BINDING_CATEGORY);
     private final Edge toggler = new Edge(z -> {
         if (z) {
-            config.toggleDisabled();
+            config.setDisabled(!config.getDisabled());
+            saveAndReloadConfig();
         }
     });
     private final Edge debugToggle = new Edge(z -> {
@@ -98,15 +89,10 @@ public class PresenceFootsteps implements ClientModInitializer {
         return optionsKeyBinding;
     }
 
-    public UpdateChecker getUpdateChecker() {
-        return updater;
-    }
 
     @Override
     public void onInitializeClient() {
-        updaterConfig.load();
         config.load();
-        config.onChangedExternally(c -> configChanged.set(true));
 
         KeyBindingHelper.registerKeyBinding(optionsKeyBinding);
         KeyBindingHelper.registerKeyBinding(toggleKeyBinding);
@@ -117,30 +103,21 @@ public class PresenceFootsteps implements ClientModInitializer {
     }
 
     private void onTick(MinecraftClient client) {
-        if (client.currentScreen instanceof PFOptionsScreen screen && configChanged.getAndSet(false)) {
-            screen.init(screen.width, screen.height);
-        }
-
-        debugToggle.accept(GameGui.isKeyDown(InputUtil.GLFW_KEY_F3) && debugToggleKeyBinding.isPressed());
+        debugToggle.accept(MinecraftClient.getInstance().debugHudEntryList.isF3Enabled() && debugToggleKeyBinding.isPressed());
 
         Optional.ofNullable(client.player).filter(e -> !e.isRemoved()).ifPresent(cameraEntity -> {
             if (client.currentScreen == null) {
                 if (optionsKeyBinding.isPressed()) {
-                    client.setScreen(new PFOptionsScreen(client.currentScreen));
+                    client.setScreen(new PFOptionsScreen().build(client.currentScreen));
                 }
                 toggler.accept(toggleKeyBinding.isPressed());
             }
 
             engine.onFrame(client, cameraEntity);
-
-            if (!FabricLoader.getInstance().isModLoaded("modmenu")) {
-                updater.attempt();
-            }
         });
     }
 
     void onEnabledStateChange(boolean enabled) {
-        engine.reload();
         showSystemToast(
                 MOD_NAME,
                 Text.translatable("key.presencefootsteps.toggle." + (enabled ? "enabled" : "disabled")).formatted(enabled ? Formatting.GREEN : Formatting.GRAY)
@@ -150,5 +127,15 @@ public class PresenceFootsteps implements ClientModInitializer {
     public void showSystemToast(Text title, Text body) {
         MinecraftClient client = MinecraftClient.getInstance();
         client.getToastManager().add(SystemToast.create(client, SystemToast.Type.PACK_LOAD_FAILURE, title, body));
+    }
+
+    public void saveAndReloadConfig() {
+        config.save();
+        boolean enabled = config.getEnabled();
+        if (prevEnabled != enabled) {
+            onEnabledStateChange(enabled);
+            prevEnabled = enabled;
+        }
+        engine.reload();
     }
 }

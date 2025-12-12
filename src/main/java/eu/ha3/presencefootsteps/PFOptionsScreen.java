@@ -5,259 +5,207 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-
-import org.jetbrains.annotations.Nullable;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import com.google.gson.FormattingStyle;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonWriter;
-
-import com.minelittlepony.common.client.gui.GameGui;
-import com.minelittlepony.common.client.gui.ScrollContainer;
-import com.minelittlepony.common.client.gui.Tooltip;
-import com.minelittlepony.common.client.gui.dimension.Bounds;
-import com.minelittlepony.common.client.gui.element.AbstractSlider;
-import com.minelittlepony.common.client.gui.element.Button;
-import com.minelittlepony.common.client.gui.element.EnumSlider;
-import com.minelittlepony.common.client.gui.element.Label;
-import com.minelittlepony.common.client.gui.element.Slider;
-import com.minelittlepony.common.client.gui.element.Toggle;
 import com.mojang.serialization.JsonOps;
+import dev.isxander.yacl3.api.*;
+import dev.isxander.yacl3.api.controller.BooleanControllerBuilder;
+import dev.isxander.yacl3.api.controller.EnumControllerBuilder;
+import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
+import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
 
-import eu.ha3.mc.quick.update.Versions;
-import eu.ha3.presencefootsteps.config.VolumeOption;
+import eu.ha3.presencefootsteps.config.EntitySelector;
 import eu.ha3.presencefootsteps.sound.acoustics.Acoustic;
 import eu.ha3.presencefootsteps.sound.acoustics.AcousticsFile;
+import eu.ha3.presencefootsteps.sound.generator.Locomotion;
 import eu.ha3.presencefootsteps.util.BlockReport;
 import eu.ha3.presencefootsteps.util.ResourceUtils;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.pack.PackScreen;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 
-class PFOptionsScreen extends GameGui {
+class PFOptionsScreen {
     public static final Text TITLE = Text.translatable("menu.pf.title");
-    public static final Text UP_TO_DATE = Text.translatable("pf.update.up_to_date");
-    public static final Text VOLUME_MIN = Text.translatable("menu.pf.volume.min");
 
-    private final ScrollContainer content = new ScrollContainer();
-
-    public PFOptionsScreen(@Nullable Screen parent) {
-        super(Text.translatable("%s (%s)", TITLE, PresenceFootsteps.getInstance().getOptionsKeyBinding().getBoundKeyLocalizedText()), parent);
-        content.margin.top = 30;
-        content.margin.bottom = 30;
-        content.getContentPadding().top = 10;
-        content.getContentPadding().right = 10;
-        content.getContentPadding().bottom = 20;
-        content.getContentPadding().left = 10;
-    }
-
-    @Override
-    protected void init() {
-        content.init(this::rebuildContent);
-    }
-
-    private void rebuildContent() {
-        int left = content.width / 2 - 100;
-
-        int wideLeft = content.width / 2 - 165;
-        int wideRight = wideLeft + 160;
-
-        int row = 0;
-
+    Screen build(Screen parentScreen) {
         PFConfig config = PresenceFootsteps.getInstance().getConfig();
 
-        getChildElements().add(content);
+        return YetAnotherConfigLib.createBuilder()
+                .title(Text.translatable("%s (%s)", TITLE, PresenceFootsteps.getInstance().getOptionsKeyBinding().getBoundKeyLocalizedText()))
+                .category(ConfigCategory.createBuilder()
+                        .name(TITLE)
+                        .tooltip(Text.literal("Main options of Presence Footsteps."))
+                        .group(OptionGroup.createBuilder()
+                                .name(Text.literal("General"))
+                                .description(OptionDescription.of(Text.literal("Options related to the general functionality of Presence Footsteps.")))
+                                .option(Option.<Boolean>createBuilder()
+                                        .name(Text.translatable("key.presencefootsteps.toggle"))
+                                        .description(OptionDescription.of(Text.translatable("menu.pf.disable_mod")))
+                                        .binding(false, config::getDisabled, config::setDisabled)
+                                        .controller(opt -> BooleanControllerBuilder.create(opt)
+                                                .formatValue(state ->
+                                                        Text.translatable(
+                                                                "key.presencefootsteps.toggle." + (state ? "disabled": "enabled")
+                                                        ).formatted(state ? Formatting.RED : Formatting.GREEN))
+                                                .coloured(false))
+                                        .build())
+                                .option(Option.<Boolean>createBuilder()
+                                        .name(Text.translatable("menu.pf.multiplayer"))
+                                        .binding(true, config::getMultiplayer, config::setMultiplayer)
+                                        .controller(TickBoxControllerBuilder::create)
+                                        .controller(opt -> BooleanControllerBuilder.create(opt)
+                                                .formatValue(state -> Text.translatable("menu.pf.multiplayer." + state))
+                                                .coloured(true))
+                                        .build())
+                                .build())
+                        .group(OptionGroup.createBuilder()
+                                .name(Text.translatable("menu.pf.group.volume"))
+                                .description(OptionDescription.of(Text.literal("Options related to loudness of sounds that are handled by Presence Footsteps.")))
+                                .option(createVolumeOption("volume", 70, 0, 100, config::getGlobalVolume, config::setGlobalVolume))
+                                .option(createVolumeOption("volume.player", 100, 0, 100, config::getClientPlayerVolume, config::setClientPlayerVolume))
+                                .option(createVolumeOption("volume.other_players", 100, 0, 100, config::getOtherPlayerVolume, config::setOtherPlayerVolume))
+                                .option(createVolumeOption("volume.hostile_entities", 100, 0, 100, config::getHostileEntitiesVolume, config::setHostileEntitiesVolume))
+                                .option(createVolumeOption("volume.passive_entities", 100, 0, 100, config::getPassiveEntitiesVolume, config::setPassiveEntitiesVolume))
+                                .option(createVolumeOption("volume.wet", 50, 0, 100, config::getWetSoundsVolume, config::setWetSoundsVolume))
+                                .option(createVolumeOption("volume.foliage", 100, 0, 100, config::getFoliageSoundsVolume, config::setFoliageSoundsVolume))
+                                .option(createVolumeOption("volume.running", 0, -100, 100, config::getRunningVolumeIncrease, config::setRunningVolumeIncrease))
+                                .build())
+                        .group(OptionGroup.createBuilder()
+                                .name(Text.translatable("menu.pf.group.footsteps"))
+                                .description(OptionDescription.of(Text.literal("Options related to loudness of sounds that are handled by Presence Footsteps.")))
+                                .option(Option.<Locomotion>createBuilder()
+                                        .name(Text.translatable("menu.pf.stance"))
+                                        .description(v -> OptionDescription.of(v.getOptionTooltip()))
+                                        .binding(new Binding<>() {
+                                            @Override
+                                            public void setValue(Locomotion value) {
+                                                config.setLocomotion(value);
+                                            }
 
-        addButton(new Label(width / 2, 10)).setCentered().getStyle().setText(getTitle());
+                                            @Override
+                                            public Locomotion getValue() {
+                                                return config.getLocomotion();
+                                            }
 
-        redrawUpdateButton(addButton(new Button(width - 30, height - 25, 25, 20)).onClick(sender -> {
-            sender.setEnabled(false);
-            sender.getStyle().setTooltip("pf.update.checking");
-            PresenceFootsteps.getInstance().getUpdateChecker().checkNow().thenAccept(newVersions -> {
-                redrawUpdateButton(sender);
-            });
-        }));
+                                            @Override
+                                            public Locomotion defaultValue() {
+                                                return Locomotion.NONE;
+                                            }
+                                        })
+                                        .controller(opt -> EnumControllerBuilder.create(opt)
+                                                .enumClass(Locomotion.class)
+                                                .formatValue(Locomotion::getOptionName)
+                                        )
+                                        .build())
+                                .option(Option.<EntitySelector>createBuilder()
+                                        .name(Text.translatable("menu.pf.footsteps.targets"))
+                                        .binding(new Binding<>() {
+                                            @Override
+                                            public void setValue(EntitySelector value) {
+                                                config.setEntitySelector(value);
+                                            }
 
-        Toggle disabledToggle = new Toggle(wideLeft, row, config.getDisabled());
-        content.addButton(disabledToggle.onChange(disabled -> {
-            updateDisableState(disabledToggle, config.setDisabled(disabled));
-            return disabled;
-        })).getStyle().setText("menu.pf.disable_mod");
+                                            @Override
+                                            public EntitySelector getValue() {
+                                                return config.getEntitySelector();
+                                            }
 
-        content.addButton(new Label(wideLeft, row += 24)).getStyle().setText("menu.pf.group.volume");
-
-        var slider = content.addButton(new Slider(wideLeft, row += 24, 0, 100, config.getGlobalVolume()))
-            .onChange(config::setGlobalVolume)
-            .setTextFormat(this::formatVolume);
-        slider.setBounds(new Bounds(row, wideLeft, 310, 20));
-        slider.getStyle().setTooltip(Tooltip.of("menu.pf.volume.tooltip", 210)).setTooltipOffset(0, 25);
-
-        row += 10;
-
-        addVolumeSlider(wideLeft, row += 24, config.clientPlayerVolume, "player");
-        addVolumeSlider(wideRight, row, config.otherPlayerVolume, "other_players");
-
-        addVolumeSlider(wideLeft, row += 24, config.hostileEntitiesVolume, "hostile_entities");
-        addVolumeSlider(wideRight, row, config.passiveEntitiesVolume, "passive_entities");
-
-        addVolumeSlider(wideLeft, row += 24, config.wetSoundsVolume, "wet");
-        addVolumeSlider(wideRight, row, config.foliageSoundsVolume, "foliage");
-        row += 10;
-
-        slider = content.addButton(new Slider(wideLeft, row += 24, -100, 100, config.getRunningVolumeIncrease()))
-            .onChange(config::setRunningVolumeIncrease)
-            .setTextFormat(formatVolume("menu.pf.volume.running"));
-        slider.setBounds(new Bounds(row, wideLeft, 310, 20));
-        slider.getStyle().setTooltip(Tooltip.of("menu.pf.volume.running.tooltip", 210)).setTooltipOffset(0, 25);
-
-        content.addButton(new Label(wideLeft, row += 25)).getStyle().setText("menu.pf.group.footsteps");
-
-        content.addButton(new EnumSlider<>(left, row += 24, config.getLocomotion())
-                .onChange(config::setLocomotion)
-                .setTextFormat(v -> v.getValue().getOptionName()))
-                .setTooltipFormat(v -> Tooltip.of(v.getValue().getOptionTooltip(), 250))
-                .setBounds(new Bounds(row, wideLeft, 310, 20));
-
-        content.addButton(new Button(wideLeft, row += 24, 150, 20).onClick(sender -> {
-            sender.getStyle().setText("menu.pf.global." + config.cycleTargetSelector().name().toLowerCase());
-        })).getStyle()
-            .setText("menu.pf.global." + config.getEntitySelector().name().toLowerCase());
-
-        content.addButton(new Button(wideRight, row, 150, 20).onClick(sender -> {
-            sender.getStyle().setText("menu.pf.multiplayer." + config.toggleMultiplayer());
-        })).getStyle()
-            .setText("menu.pf.multiplayer." + config.getEnabledMP());
-
-        content.addButton(new Button(wideLeft, row += 24, 150, 20).onClick(sender -> {
-            sender.getStyle().setText("menu.pf.footwear." + (config.toggleFootwear() ? "on" : "off"));
-        })).getStyle()
-            .setText("menu.pf.footwear." + (config.getEnabledFootwear() ? "on" : "off"));
-
-        content.addButton(new Button(wideRight, row, 150, 20).onClick(sender -> {
-            sender.getStyle().setText("menu.pf.exclusive_mode." + (config.toggleExclusiveMode() ? "on" : "off"));
-        })).getStyle()
-            .setText("menu.pf.exclusive_mode." + (config.isExclusiveMode() ? "on" : "off"));
-
-        content.addButton(new Label(wideLeft, row += 25)).getStyle().setText("menu.pf.group.sound_packs");
-
-        content.addButton(new Button(wideLeft, row += 25, 150, 20).onClick(sender -> {
-            client.setScreen(new PackScreen(
-                    client.getResourcePackManager(),
-                    manager -> {
-                        client.options.refreshResourcePacks(manager);
-                        client.setScreen(this);
-                    },
-                    client.getResourcePackDir(),
-                    Text.translatable("resourcePack.title")
-            ));
-        })).getStyle().setText("options.resourcepack");
-
-        content.addButton(new Label(wideLeft, row += 25)).getStyle().setText("menu.pf.group.debugging");
-
-        content.addButton(new Button(wideLeft, row += 25, 150, 20).onClick(sender -> {
-            sender.setEnabled(false);
-            BlockReport.execute(PresenceFootsteps.getInstance().getEngine().getIsolator(), "report_concise", false).thenRun(() -> sender.setEnabled(true));
-        })).setEnabled(client.world != null)
-            .getStyle()
-            .setText("menu.pf.report.concise")
-            .setTooltip("menu.pf.report.concise.tooltip");
-
-        content.addButton(new Button(wideRight, row, 150, 20)
-            .onClick(sender -> {
-                sender.setEnabled(false);
-                BlockReport.execute(PresenceFootsteps.getInstance().getEngine().getIsolator(), "report_full", true).thenRun(() -> sender.setEnabled(true));
-            }))
-            .setEnabled(client.world != null)
-            .getStyle()
-                .setText("menu.pf.report.full")
-                .setTooltip("menu.pf.report.full.tooltip");
-
-        content.addButton(new Button(wideLeft, row += 25, 150, 20)
-                .onClick(sender -> {
-                    sender.setEnabled(false);
-                    BlockReport.execute(loc -> {
-                        ResourceUtils.forEach(AcousticsFile.FILE_LOCATION, client.getResourceManager(), reader -> {
-                            Map<String, Acoustic> acoustics = new HashMap<>();
-                            @SuppressWarnings("deprecation")
-                            AcousticsFile file = AcousticsFile.read(reader, acoustics::put, true);
-                            if (file != null) {
-                                for (var acoustic : acoustics.entrySet()) {
-                                    Acoustic.CODEC.encodeStart(JsonOps.INSTANCE, acoustic.getValue()).resultOrPartial(error -> {
-                                        PresenceFootsteps.logger.error("Error whilst exporting acoustic: " + error);
-                                    }).ifPresent(json -> {
-                                        try (var writer = new JsonWriter(Files.newBufferedWriter(loc.resolve(acoustic.getKey().toLowerCase(Locale.ROOT) + ".json")))) {
-                                            writer.setFormattingStyle(FormattingStyle.PRETTY);
-                                            Streams.write(json, writer);
-                                        } catch (IOException e) {
-                                            PresenceFootsteps.logger.error("Error whilst exporting acoustics", e);
-                                        }
-                                    });
-                                }
-                            }
-                        });
-                    }, "acoustics", "").thenRun(() -> sender.setEnabled(true));
-                }))
-                .setEnabled(client.world != null)
-                .getStyle()
-                    .setText("menu.pf.report.acoustics")
-                    .setTooltip("menu.pf.report-acoustics.tooltip");
-
-        addButton(new Button(left, height - 25)
-            .onClick(sender -> finish())).getStyle()
-            .setText("gui.done");
-
-        updateDisableState(disabledToggle, disabledToggle.getValue());
+                                            @Override
+                                            public EntitySelector defaultValue() {
+                                                return EntitySelector.ALL;
+                                            }
+                                        })
+                                        .controller(opt -> EnumControllerBuilder.create(opt).
+                                                enumClass(EntitySelector.class)
+                                                .formatValue(EntitySelector::getOptionName)
+                                        )
+                                        .build())
+                                .option(createOnOffOption("footwear", true, config::getFootwear, config::setGlobal))
+                                .option(createOnOffOption("exclusive_mode", false, config::getExclusive, config::setExclusive))
+                                .build())
+                        .group(OptionGroup.createBuilder()
+                                .name(Text.translatable("menu.pf.group.debugging"))
+                                .option(ButtonOption.createBuilder()
+                                        .name(Text.translatable("menu.pf.report.concise"))
+                                        .description(OptionDescription.of(Text.translatable("menu.pf.report.concise.tooltip")))
+                                        .available(MinecraftClient.getInstance().world != null)
+                                        .action((screen, opt) -> {
+                                            opt.setAvailable(false);
+                                            BlockReport.execute(PresenceFootsteps.getInstance().getEngine().getIsolator(), "report_concise", false)
+                                                    .thenRun(() -> opt.setAvailable(true));
+                                        })
+                                        .build())
+                                .option(ButtonOption.createBuilder()
+                                        .name(Text.translatable("menu.pf.report.full"))
+                                        .description(OptionDescription.of(Text.translatable("menu.pf.report.full.tooltip")))
+                                        .available(MinecraftClient.getInstance().world != null)
+                                        .action((screen, opt) -> {
+                                            opt.setAvailable(false);
+                                            BlockReport.execute(PresenceFootsteps.getInstance().getEngine().getIsolator(), "report_full", false)
+                                                    .thenRun(() -> opt.setAvailable(true));
+                                        })
+                                        .build())
+                                .option(ButtonOption.createBuilder()
+                                        .name(Text.translatable("menu.pf.report.acoustics"))
+                                        .description(OptionDescription.of(Text.translatable("menu.pf.report.acoustics.tooltip")))
+                                        .action((screen, opt) -> {
+                                            opt.setAvailable(false);
+                                            BlockReport.execute(loc -> {
+                                                ResourceUtils.forEach(AcousticsFile.FILE_LOCATION, MinecraftClient.getInstance().getResourceManager(), reader -> {
+                                                    Map<String, Acoustic> acoustics = new HashMap<>();
+                                                    @SuppressWarnings("deprecation")
+                                                    AcousticsFile file = AcousticsFile.read(reader, acoustics::put, true);
+                                                    if (file != null) {
+                                                        for (var acoustic : acoustics.entrySet()) {
+                                                            Acoustic.CODEC.encodeStart(JsonOps.INSTANCE, acoustic.getValue()).resultOrPartial(error -> {
+                                                                PresenceFootsteps.logger.error("Error whilst exporting acoustic: {}", error);
+                                                            }).ifPresent(json -> {
+                                                                try (var writer = new JsonWriter(Files.newBufferedWriter(loc.resolve(acoustic.getKey().toLowerCase(Locale.ROOT) + ".json")))) {
+                                                                    writer.setFormattingStyle(FormattingStyle.PRETTY);
+                                                                    Streams.write(json, writer);
+                                                                } catch (IOException e) {
+                                                                    PresenceFootsteps.logger.error("Error whilst exporting acoustics", e);
+                                                                }
+                                                            });
+                                                        }
+                                                    }
+                                                });
+                                            }, "acoustics", "").thenRun(() -> opt.setAvailable(true));
+                                        })
+                                        .build())
+                                .build())
+                        .build())
+                .save(() -> {
+                    PresenceFootsteps.getInstance().saveAndReloadConfig();
+                })
+                .build()
+                .generateScreen(parentScreen);
     }
 
-    private void addVolumeSlider(int x, int y, VolumeOption option, String name) {
-        var slider = content.addButton(new Slider(x, y, 0, 100, option.get()))
-                .onChange(option)
-                .setTextFormat(formatVolume("menu.pf.volume." + name));
-        slider.setBounds(new Bounds(y, x, 150, 20));
-        slider.styled(s -> s.setTooltip(Tooltip.of("menu.pf.volume." + name + ".tooltip", 210)).setTooltipOffset(0, 25));
+    private Option<Integer> createVolumeOption(String key, Integer def, Integer min, Integer max, Supplier<Integer> getter, Consumer<Integer> setter) {
+        return Option.<Integer>createBuilder()
+                .name(Text.translatable("menu.pf." + key))
+                .description(OptionDescription.of(Text.translatable("menu.pf." + key + ".tooltip")))
+                .binding(def, getter, setter)
+                .controller(opt -> IntegerSliderControllerBuilder.create(opt)
+                        .range(min, max)
+                        .step(1)
+                )
+                .build();
     }
 
-    private void updateDisableState(Toggle disabledToggle, boolean disabled) {
-        content.children().forEach(child -> {
-            if (child != disabledToggle && child instanceof Button button) {
-                button.setEnabled(!disabled);
-            }
-        });
-    }
-
-    private void redrawUpdateButton(Button button) {
-        Optional<Versions> versions = PresenceFootsteps.getInstance().getUpdateChecker().getNewer();
-        boolean hasUpdate = versions.isPresent();
-        button.setEnabled(true);
-        button.getStyle()
-           .setText(hasUpdate ? "🙁" : "🙂")
-           .setColor(hasUpdate ? 0xFF0000 : 0xFFFFFF)
-           .setTooltip(versions
-                   .map(Versions::latest)
-                   .map(latest -> (Text)Text.translatable("pf.update.updates_available",
-                           latest.version().getFriendlyString(),
-                           latest.minecraft().getFriendlyString()))
-                   .orElse(UP_TO_DATE));
-    }
-
-    private Text formatVolume(AbstractSlider<Float> slider) {
-        if (slider.getValue() <= 0) {
-            return VOLUME_MIN;
-        }
-
-        return Text.translatable("menu.pf.volume", (int)Math.floor(slider.getValue()));
-    }
-
-    @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float tickDelta) {
-        super.render(context, mouseX, mouseY, tickDelta);
-        content.render(context, mouseX, mouseY, tickDelta);
-    }
-
-    static Function<AbstractSlider<Float>, Text> formatVolume(String key) {
-        return slider -> Text.translatable(key, (int)Math.floor(slider.getValue()));
+    public Option<Boolean> createOnOffOption(String key, Boolean def, Supplier<Boolean> getter, Consumer<Boolean> setter) {
+        return Option.<Boolean>createBuilder()
+                .name(Text.translatable("menu.pf." + key))
+                .binding(def, getter, setter)
+                .controller(opt -> BooleanControllerBuilder.create(opt)
+                        .onOffFormatter()
+                        .coloured(true))
+                .build();
     }
 }
