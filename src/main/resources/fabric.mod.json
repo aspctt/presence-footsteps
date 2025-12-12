@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "id": "presencefootsteps",
   "version": "${version}",
-  "name": "Presence Footsteps",
-  "description": "An overly complicated sound mod.",
+  "name": "${name}",
+  "description": "${description}",
   "authors": [
-    "Hurricaaane (Ha3)", "Sollace"
+    "Hurricaaane (Ha3)", "Sollace", "amiralimollaei"
   ],
   "contact": {
-    "sources": "https://github.com/Sollace/Presence-Footsteps",
-    "issues": "https://github.com/Sollace/Presence-Footsteps/issues"
+    "sources": "https://github.com/amiralimollaei/Presence-Footsteps-Lite",
+    "issues": "https://github.com/amiralimollaei/Presence-Footsteps-Lite/issues"
   },
   "license": "MIT",
   "icon": "logo.png",
@@ -39,8 +39,8 @@
     "modmenu": {
       "links": {
         "modmenu.discord": "https://discord.gg/zKSZ8Mg",
-        "modmenu.github_releases": "https://github.com/Sollace/Presence-Footsteps/releases",
-        "modmenu.modrinth": "https://modrinth.com/mod/presence-footsteps"
+        "modmenu.github_releases": "https://github.com/amiralimollaei/Presence-Footsteps-Lite/releases",
+        "modmenu.modrinth": "https://modrinth.com/mod/presence-footsteps-lite"
       },
       "update_checker": true
     }

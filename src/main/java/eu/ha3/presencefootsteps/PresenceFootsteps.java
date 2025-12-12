@@ -32,7 +32,6 @@ public class PresenceFootsteps implements ClientModInitializer {
 
     private static final String MODID = "presencefootsteps";
     private static final KeyBinding.Category KEY_BINDING_CATEGORY = KeyBinding.Category.create(id("category"));
-    private static final String UPDATER_ENDPOINT = "https://raw.githubusercontent.com/Sollace/Presence-Footsteps/master/version/latest.json";
 
     public static final Text MOD_NAME = Text.translatable("mod.presencefootsteps.name");
 
@@ -66,8 +65,6 @@ public class PresenceFootsteps implements ClientModInitializer {
             MinecraftClient.getInstance().debugHudEntryList.toggleVisibility(PFDebugHud.ID);
         }
     });
-
-    private final AtomicBoolean configChanged = new AtomicBoolean();
 
     public PresenceFootsteps() {
         instance = this;

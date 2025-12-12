@@ -20,7 +20,7 @@ java {
 }
 
 group = project.group
-description = project.displayname
+description = project.description
 archivesBaseName = project.name
 
 reckon {
@@ -61,7 +61,9 @@ processResources {
                 "loaderVersion": ">=${project.loader_version}",
                 "fabricVersion": ">=${project.fabric_version}",
                 "yaclVersion": ">=${project.yacl_version}",
-                "modmenuVersion": ">=${project.modmenu_version}"
+                "modmenuVersion": ">=${project.modmenu_version}",
+                "name": "${project.displayname}",
+                "description": "${project.description}"
     }
 
     from 'LICENSE'
