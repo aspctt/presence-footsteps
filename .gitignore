@@ -1,15 +1,26 @@
-.gradle/
-.settings/
-bin/
-build/
-run/
+# eclipse
+bin
+*.launch
+.settings
+.metadata
 .classpath
 .project
-*.launch
-/.apt_generated/
-.factorypath
-logs/
-.idea/
+
+# idea
+out
+*.ipr
+*.iws
 *.iml
-classes/
-out/
+.idea
+
+# gradle
+build
+.gradle
+
+# other
+eclipse
+run
+runs
+run-data
+
+repo
